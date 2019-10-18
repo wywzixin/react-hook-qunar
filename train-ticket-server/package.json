@@ -10,7 +10,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "start": "pm2 start index.js -n mocker",
+    "start": "pm2 start index.js -n -f mocker",
     "stop": "pm2 delete mocker"
   },
   "repository": {
