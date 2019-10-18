@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import URI from 'urijs';
 import dayjs from 'dayjs';
 
-import Header from '../common/Header.jsx';
+import Header from '../common/Header/Header.jsx';
 
 
 import './App.css';

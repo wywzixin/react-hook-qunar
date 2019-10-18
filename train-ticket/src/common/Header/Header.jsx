@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './Header.css';
 
-export default function Header(props) {
+ function Header(props) {
     const { onBack, title } = props;
 
     return (
@@ -26,3 +26,5 @@ Header.propTypes = {
     onBack: PropTypes.func.isRequired,
     title: PropTypes.string.isRequired,
 };
+
+export default Header;

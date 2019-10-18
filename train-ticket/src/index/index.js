@@ -4,7 +4,7 @@ import { Provider } from 'react-redux';
 import 'normalize.css/normalize.css';
 import * as serviceWorker from '../serviceWorker';
 
-import store from './store';
+import store from './store/store';
 import './index.css';
 import App from './App.jsx';
 

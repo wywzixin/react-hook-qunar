@@ -3,8 +3,7 @@ import { connect } from 'react-redux';
 import URI from 'urijs';
 import dayjs from 'dayjs';
 import { bindActionCreators } from 'redux';
-
-import Header from '../common/Header.jsx';
+import Header from '../common/Header/Header.jsx';
 
 
 
