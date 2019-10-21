@@ -3,9 +3,13 @@ import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import URI from 'urijs';
 import dayjs from 'dayjs';
-
+import { h0 } from '../common/fp';
+import useNav from '../common/useNav';
+import { TrainContext } from './context';
 import Header from '../common/Header/Header.jsx';
-
+import Nav from '../common/Nav/Nav.jsx';
+import Detail from '../common/Detail.jsx';
+import Candidate from './Candidate.jsx';
 
 import './App.css';
 
@@ -25,7 +29,8 @@ import {
     toggleIsScheduleVisible,
 } from './actions';
 
-
+//异步加载
+const Schedule = lazy(() => import('./Schedule.jsx'))
 
 function App(props) {
     const {
@@ -48,18 +53,23 @@ function App(props) {
         window.history.back();
     }, []);
 
+
     useEffect(() => {
         const queries = URI.parseQuery(window.location.search);
+        //http://localhost:3000/ticket.html?aStation=%E5%8D%97%E4%BA%AC%E5%8D%97
+        //&dStation=%E5%8C%97%E4%BA%AC%E5%8D%97&trainNumber=G203&date=2019-02-10
         const { aStation, dStation, date, trainNumber } = queries;
 
         dispatch(setDepartStation(dStation));
         dispatch(setArriveStation(aStation));
         dispatch(setTrainNumber(trainNumber));
-
+        dispatch(setDepartDate(h0(dayjs(date).valueOf())));
+        //是否接收参数完毕
         dispatch(setSearchParsed(true));
     }, []);
 
     useEffect(() => {
+        //设置title
         document.title = trainNumber;
     }, [trainNumber]);
 
@@ -68,6 +78,7 @@ function App(props) {
             return;
         }
 
+        //http://localhost:3000/rest/ticket?date=2019-02-10&trainNumber=G203
         const url = new URI('/rest/ticket')
             .setSearch('date', dayjs(departDate).format('YYYY-MM-DD'))
             .setSearch('trainNumber', trainNumber)
@@ -77,7 +88,10 @@ function App(props) {
             .then(response => response.json())
             .then(result => {
                 const { detail, candidates } = result;
-
+                // arriveDate: 1549728000000
+                // arriveTimeStr: "11:47"
+                // departTimeStr: "07:15"
+                // durationStr: "4小时32分"
                 const {
                     departTimeStr,
                     arriveTimeStr,
@@ -93,8 +107,18 @@ function App(props) {
             });
     }, [searchParsed, departDate, trainNumber]);
 
-  
+    const { isPrevDisabled, isNextDisabled, prev, next } = useNav(
+        departDate,
+        dispatch,
+        prevDate,
+        nextDate
+    );
 
+    const detailCbs = useMemo(() => {
+        return bindActionCreators({
+            toggleIsScheduleVisible
+        }, dispatch)
+    }, [])
     if (!searchParsed) {
         return null;
     }
@@ -104,7 +128,59 @@ function App(props) {
             <div className="header-wrapper">
                 <Header title={trainNumber} onBack={onBack} />
             </div>
-        
+            <div className="nav-wrapper">
+                <Nav
+                    date={departDate}
+                    isPrevDisabled={isPrevDisabled}
+                    isNextDisabled={isNextDisabled}
+                    prev={prev}
+                    next={next}
+                />
+            </div>
+            <div className="detail-wrapper">
+                <Detail
+                    departDate={departDate}
+                    arriveDate={arriveDate}
+                    departTimeStr={departTimeStr}
+                    arriveTimeStr={arriveTimeStr}
+                    trainNumber={trainNumber}
+                    departStation={departStation}
+                    arriveStation={arriveStation}
+                    durationStr={durationStr}
+                    {...detailCbs}
+                >
+                    <span className="left"></span>
+                    <span
+                        className="schedule"
+                        onClick={() => detailCbs.toggleIsScheduleVisible()}
+                    >
+                        时刻表
+                    </span>
+                    <span className="right"></span>
+                </Detail>
+            </div>
+            <TrainContext.Provider
+                value={{
+                    trainNumber,
+                    departStation,
+                    arriveStation,
+                    departDate,
+                }}
+            >
+                <Candidate tickets={tickets} />
+            </TrainContext.Provider>
+            {isScheduleVisible &&
+                <div className="mask" onClick={() => dispatch(toggleIsScheduleVisible())}>
+                    <Suspense fallback={<div>loading</div>}>
+                        < Schedule
+                            date={departDate}
+                            trainNumber={trainNumber}
+                            departStation={departStation}
+                            arriveStation={arriveStation}
+                        />
+                    </Suspense>
+                </div>
+            }
         </div>
     );
 }
